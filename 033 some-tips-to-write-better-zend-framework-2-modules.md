@@ -62,21 +62,21 @@ Zend Framework 2, как и другие современные фреймвор
 
 В качестве примера, посмотрите на конструктор:
 
-<pre class="lang:php"><code>
+<pre class="lang:php">
 public function __construct(DecoderPluginManager $pluginManager)
 {
     $this->decoderPluginManager = $pluginManager;
 }
-</code></pre>
+</pre>
 
 Вместо конструктора мы можем написать сеттер/геттер для установки `DecoderPluginManager` и внедрения зависимости через сервис-менеджер или используя инициализатор. НО, это предполагает, что ваши пользователи фактически будут использовать сервис-менеджер для создания вашего объекта.
 
 Пока однажды кто-нибудь не создаст парсер таким образом:
 
-<pre class="lang:php"><code>
+<pre class="lang:php">
 $parser = new BodyParser();
 $parser->parse($request);
-</code></pre>
+</pre>
 
 И бум! Он не вызвал `setDecoderPluginManager` как и не создал экземпляр через сервис-менеджер. Зависимость корректно не установлена, и этот код выбросит исключение.
 
@@ -86,7 +86,7 @@ $parser->parse($request);
 
 В ZF2 общеупотребимой практикой является управление зависимостями через использование замыканий в качестве фабрик в методе `getServiceConfig` вашего класса `Module.php`. Вместо этого, вам лучше использовать явные фабричные классы и применять их при определении фабрик в файле `module.config.php` (в секции service_manager). Это несколько эффективней (потому что создается экземпляр замыкания, строку создать быстрее, нежели замыкание), позволяет кэшировать конфигурационный файл (замыкание кэшировать нельзя) и делает `Module.php` более читаемым, т.к. удаляет тонны кода замыканий.
 
-<pre class="lang:php"><code>
+<pre class="lang:php">
 return array(
     'service_manager' => array(
         'factories' => array(
@@ -94,7 +94,7 @@ return array(
         )
     )
 );
-</code></pre>
+</pre>
 
 ## Для внесения зависимостей используйте сервис-менеджер где только возможно
 
@@ -102,7 +102,7 @@ return array(
 
 И благодаря архитектуре ZF 2, это сделать действительно просто: создавайте большинство ваших объектов через сервис-менеджер. Например, в ZfrRest мы добавили некоторые слушатели, которые предоставляют полезные возможности в контексте REST. Первый способ - это просто сделать так:
 
-<pre class="lang:php"><code>
+<pre class="lang:php">
 public function onBootstrap(EventInterface $e)
 {
     $application     = $e->getTarget();
@@ -110,13 +110,14 @@ public function onBootstrap(EventInterface $e)
     $eventManager    = $application->getEventManager();
 
     $eventManager->attach(new ZfrRest\Mvc\HttpExceptionListener());
-}</code></pre>
+}
+</pre>
 
 Однако, подумайте о тех странных парнях, которые хотят еще посылать письма своей бабушке когда будет выброшено исключение. Как он может это сделать сейчас? Ну... он может изменить код вашего модуля, но это не слишком хорошая затея, т.к. когда он захочет обновить ваш модуль, ему придется повторить изменения снова.
 
 К счастью, использование сервис-менеджера решает эту проблему:
 
-<pre class="lang:php"><code>
+<pre class="lang:php">
 public function onBootstrap(EventInterface $e)
 {
     $application     = $e->getTarget();
@@ -125,11 +126,11 @@ public function onBootstrap(EventInterface $e)
 
     $eventManager->attach($serviceManager->get('ZfrRest\Mvc\HttpExceptionListener'));
 }
-</code></pre>
+</pre>
 
 Теперь слушатель достается из сервис-менеджера. Конечно, в ZfrRest есть реализация по умолчанию этого листенера, добавленная в настройки сервис-менеджера:
 
-<pre class="lang:php"><code>
+<pre class="lang:php">
 // in the module.config.php
 return array(
     'service_manager' => array(
@@ -138,11 +139,11 @@ return array(
         )
     )
 );
-</code></pre>
+</pre>
 
 Теперь если кто-то захочет заменить слушатель, ему просто нужно изменить параметр в собственном конфигурационном файле:
 
-<pre class="lang:php"><code>
+<pre class="lang:php">
 // in the module.config.php
 return array(
     'service_manager' => array(
@@ -151,7 +152,7 @@ return array(
         )
     )
 );
-</code></pre>
+</pre>
 
 ## Пишите модульные тесты
 
